@@ -6,11 +6,10 @@ void main() async {
   var nbSink = StringBuffer();
   var nbWriter = CsvWriter.withHeaders(nbSink, ['Number', 'Odd?', 'Even?']);
   for (var i = 0; i < 100; i++) {
-    nbWriter.set(header: 'Number', value: i);
-    nbWriter.set(header: 'Odd?', value: (i % 2) != 0);
-    nbWriter.set(header: 'Even?', value: (i % 2) == 0);
+    nbWriter['Number'] = i;
+    nbWriter['Odd?'] = (i % 2) != 0;
+    nbWriter['Even?'] = (i % 2) == 0;
     nbWriter.writeData();
-    await nbWriter.flush();
   }
 
   print('NUMBERS:');
@@ -19,29 +18,31 @@ void main() async {
   print('');
 
   var familyFile = File('test.csv');
-  var familySink = familyFile.openWrite();
+  var familyWriter = CsvWriter.withHeaders(familyFile.openWrite(), [
+    'Name',
+    'First name',
+    'Father name',
+    'First name',
+    'Mother name',
+    'First name',
+  ]);
+
   try {
-    var familyWriter = CsvWriter.withHeaders(familySink, [
-      'Name',
-      'First name',
-      'Father name',
-      'First name',
-      'Mother name',
-      'First name',
-    ]);
+    familyWriter.set(header: 'Name', value: 'Doe');
+    familyWriter.set(header: 'Father name', value: 'Doe');
+    familyWriter.set(header: 'First name', index: 1, value: 'John');
+    familyWriter.set(header: 'Mother name', value: 'Smith');
+    familyWriter.set(header: 'First name', index: 2, value: 'Ann');
+
     for (var i = 0; i < 5; i++) {
-      familyWriter.set(header: 'Name', value: 'Doe');
-      familyWriter.set(header: 'First name', index: 0, value: 'John Jr #$i');
-      familyWriter.set(header: 'Father name', value: 'Doe');
-      familyWriter.set(header: 'First name', index: 1, value: 'John');
-      familyWriter.set(header: 'Mother name', value: 'Smith');
-      familyWriter.set(header: 'First name', index: 2, value: 'Ann');
-      familyWriter.writeData();
-      await familySink.flush();
+      familyWriter.set(header: 'First name', index: 0, value: 'John #$i, Jr');
+      familyWriter.writeData(clear: false);
+      if (i % 2 == 0) {
+        await familyWriter.flush();
+      }
     }
   } finally {
-    await familySink.flush();
-    await familySink.close();
+    await familyWriter.close();
   }
 
   print('FAMILY:');

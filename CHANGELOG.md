@@ -1,3 +1,4 @@
 ## 1.0.0
 
-- Initial version.
+- Lightweight Dart package to write CSV data to a `StringSink`.
+- Initial commit.
