@@ -1,10 +1,13 @@
+/// [InvalidHeaderException] thrown when the CSV column cannot be found.
 class InvalidHeaderException implements Exception {
-  final String? _message;
+  /// The exception message.
+  final String? message;
 
-  InvalidHeaderException([this._message]);
+  /// Creates a new [InvalidHeaderException] with [message].
+  InvalidHeaderException([this.message]);
 
   @override
-  String toString() => (_message ?? '').trim().isEmpty
+  String toString() => (message ?? '').trim().isEmpty
       ? 'InvalidHeaderException'
-      : 'InvalidHeaderException: $_message';
+      : 'InvalidHeaderException: $message';
 }

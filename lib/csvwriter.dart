@@ -1,4 +1,4 @@
 library csvwriter;
 
-export 'src/csvwriter.dart';
+export 'src/csv_writer.dart';
 export 'src/exceptions.dart';

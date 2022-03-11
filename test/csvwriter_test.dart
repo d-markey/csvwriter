@@ -9,14 +9,14 @@ void main() {
       final sb = StringBuffer();
       final writer = CsvWriter(sb, 3);
 
-      writer.set(index: 0, value: 'First record');
-      writer.set(index: 1, value: 'A #1');
-      writer.set(index: 2, value: 'B #1');
+      writer.set('First record', index: 0);
+      writer.set('A #1', index: 1);
+      writer.set('B #1', index: 2);
       writer.writeData();
 
-      writer.set(index: 0, value: 'Second record');
-      writer.set(index: 1, value: 'A #2');
-      writer.set(index: 2, value: 'B #2');
+      writer.set('Second record', index: 0);
+      writer.set('A #2', index: 1);
+      writer.set('B #2', index: 2);
       writer.writeData();
 
       final csv = sb.toString();
@@ -71,14 +71,14 @@ void main() {
       final headers = ['Header', 'Value', 'Value'];
       final writer = CsvWriter.withHeaders(sb, headers);
 
-      writer.set(header: 'Header', value: 'First record');
-      writer.set(header: 'Value', index: 0, value: 'A #1');
-      writer.set(header: 'Value', index: 1, value: 'B #1');
+      writer.set('First record', header: 'Header');
+      writer.set('A #1', header: 'Value', index: 0);
+      writer.set('B #1', header: 'Value', index: 1);
       writer.writeData();
 
-      writer.set(header: 'Header', value: 'Second record');
-      writer.set(header: 'Value', index: 0, value: 'A #2');
-      writer.set(header: 'Value', index: 1, value: 'B #2');
+      writer.set('Second record', header: 'Header');
+      writer.set('A #2', header: 'Value', index: 0);
+      writer.set('B #2', header: 'Value', index: 1);
       writer.writeData();
 
       final csv = sb.toString();
@@ -103,14 +103,14 @@ void main() {
       final headers = ['Header', 'Value', 'Value'];
       final writer = CsvWriter.withHeaders(sb, headers);
 
-      writer.set(index: 0, value: 'First record');
-      writer.set(index: 1, value: 'A #1');
-      writer.set(index: 2, value: 'B #1');
+      writer.set('First record', index: 0);
+      writer.set('A #1', index: 1);
+      writer.set('B #1', index: 2);
       writer.writeData();
 
-      writer.set(index: 0, value: 'Second record');
-      writer.set(index: 1, value: 'A #2');
-      writer.set(index: 2, value: 'B #2');
+      writer.set('Second record', index: 0);
+      writer.set('A #2', index: 1);
+      writer.set('B #2', index: 2);
       writer.writeData();
 
       final csv = sb.toString();
@@ -130,7 +130,7 @@ void main() {
               'Header,Value,Value\r\nFirst record,A #1,B #1\r\nSecond record,A #2,B #2\r\n'));
     });
 
-    test('Setting values', () {
+    test('Setting values - one by one', () {
       final sb = StringBuffer();
       final headers = ['Header', 'Value', 'Value'];
       final writer = CsvWriter.withHeaders(sb, headers);
@@ -138,35 +138,83 @@ void main() {
       writer['Header'] = 'TEST #1';
       expect(writer['Header'], equals('TEST #1'));
 
-      writer.set(header: 'Header', value: 'TEST #2');
+      writer.set('TEST #2', header: 'Header');
       expect(writer.get(header: 'Header'), equals('TEST #2'));
 
-      writer.set(header: 'Header', index: 0, value: 'TEST #2');
+      writer.set('TEST #2', header: 'Header', index: 0);
       expect(writer.get(header: 'Header', index: 0), equals('TEST #2'));
 
-      expect(() => writer.set(header: 'Header', index: 1, value: 'MUST THROW'),
+      expect(() => writer.set('MUST THROW', header: 'Header', index: 1),
           throwsA(isA<InvalidHeaderException>()));
 
       expect(() => writer['Value'] = 'MUST THROW',
           throwsA(isA<InvalidHeaderException>()));
-      expect(() => writer.set(header: 'Value', value: 'MUST THROW'),
+      expect(() => writer.set('MUST THROW', header: 'Value'),
           throwsA(isA<InvalidHeaderException>()));
 
-      writer.set(header: 'Value', index: 0, value: 'VALUE #1');
+      writer.set('VALUE #1', header: 'Value', index: 0);
       expect(writer.get(header: 'Value', index: 0), equals('VALUE #1'));
 
-      writer.set(header: 'Value', index: 1, value: 'VALUE #2');
+      writer.set('VALUE #2', header: 'Value', index: 1);
       expect(writer.get(header: 'Value', index: 1), equals('VALUE #2'));
 
-      expect(() => writer.set(header: 'Value', index: 2, value: 'MUST THROW'),
+      expect(() => writer.set('MUST THROW', header: 'Value', index: 2),
           throwsA(isA<InvalidHeaderException>()));
 
       expect(() => writer['Undefined'] = 'MUST THROW',
           throwsA(isA<InvalidHeaderException>()));
-      expect(() => writer.set(header: 'Undefined', value: 'MUST THROW'),
+      expect(() => writer.set('MUST THROW', header: 'Undefined'),
           throwsA(isA<InvalidHeaderException>()));
+      expect(() => writer.set('MUST THROW', header: 'Undefined', index: 1),
+          throwsA(isA<InvalidHeaderException>()));
+    });
+
+    test('Setting values - using a List', () {
+      final sb = StringBuffer();
+      final headers = ['Header', 'Value', 'Value'];
+      final writer = CsvWriter.withHeaders(sb, headers);
+
+      writer.setData(['TEST #1', 'VALUE #1', 'VALUE #2']);
+      expect(writer['Header'], equals('TEST #1'));
+      expect(writer.get(header: 'Value', index: 0), equals('VALUE #1'));
+      expect(writer.get(header: 'Value', index: 1), equals('VALUE #2'));
+
+      writer.setData(['TEST #2']);
+      expect(writer['Header'], equals('TEST #2'));
+      expect(writer.get(header: 'Value', index: 0), equals('VALUE #1'));
+      expect(writer.get(header: 'Value', index: 1), equals('VALUE #2'));
+
       expect(
-          () => writer.set(header: 'Undefined', index: 1, value: 'MUST THROW'),
+          () =>
+              writer.setData(['TEST #1', 'VALUE #1', 'VALUE #2', 'MUST THROW']),
+          throwsA(isA<InvalidHeaderException>()));
+    });
+
+    test('Setting values - using a Map<String, dynamic>', () {
+      final sb = StringBuffer();
+      final headers = ['Header', 'Value 1', 'Value 2'];
+      final writer = CsvWriter.withHeaders(sb, headers);
+
+      writer.setData(
+          {'Header': 'TEST #1', 'Value 1': 'VALUE #1', 'Value 2': 'VALUE #2'});
+      expect(writer['Header'], equals('TEST #1'));
+      expect(writer['Value 1'], equals('VALUE #1'));
+      expect(writer['Value 2'], equals('VALUE #2'));
+
+      writer.setData({'Header': 'TEST #2'});
+      expect(writer['Header'], equals('TEST #2'));
+      expect(writer['Value 1'], equals('VALUE #1'));
+      expect(writer['Value 2'], equals('VALUE #2'));
+
+      expect(
+          () => writer.setData({
+                'Header': 'TEST #1',
+                'Value 1': 'VALUE #1',
+                'Value 2': 'VALUE #2',
+                'Value 3': 'MUST THROW'
+              }),
+          throwsA(isA<InvalidHeaderException>()));
+      expect(() => writer.setData({'Bad Header': 'MUST THROW'}),
           throwsA(isA<InvalidHeaderException>()));
     });
 
@@ -329,10 +377,16 @@ void main() {
       writer['Header #2'] = 'A #1';
       writer['Header #3'] = 'B #1';
       writer.writeData(clear: false);
+      expect(writer['Header #1'], equals('ITEM 1'));
+      expect(writer['Header #2'], equals('A #1'));
+      expect(writer['Header #3'], equals('B #1'));
 
       writer['Header #2'] = 'C #1';
       writer['Header #3'] = 'D #1';
       writer.writeData();
+      expect(writer['Header #1'], isNull);
+      expect(writer['Header #2'], isNull);
+      expect(writer['Header #3'], isNull);
 
       final csv = sb.toString();
 
@@ -350,6 +404,111 @@ void main() {
           csv,
           equals(
               'Header #1,Header #2,Header #3\r\nITEM 1,A #1,B #1\r\nITEM 1,C #1,D #1\r\n'));
+    });
+
+    test('Write structured data - List', () {
+      final sb = StringBuffer();
+      final headers = ['Header #1', 'Header #2', 'Header #3'];
+      final writer = CsvWriter.withHeaders(sb, headers);
+
+      writer.writeData(data: ['ITEM 1', 'A #1', 'B #1'], clear: false);
+      expect(writer['Header #1'], equals('ITEM 1'));
+      expect(writer['Header #2'], equals('A #1'));
+      expect(writer['Header #3'], equals('B #1'));
+
+      writer.writeData(data: ['ITEM 1', 'C #1', 'D #1']);
+      expect(writer['Header #1'], isNull);
+      expect(writer['Header #2'], isNull);
+      expect(writer['Header #3'], isNull);
+
+      final csv = sb.toString();
+
+      final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
+
+      expect(lines.length, equals(3)); // 1 header + 2 records
+      expect(lines[0],
+          equals('Header #1,Header #2,Header #3')); // first line = header
+      expect(
+          lines[1], equals('ITEM 1,A #1,B #1')); // second line = first record
+      expect(
+          lines[2], equals('ITEM 1,C #1,D #1')); // second line = first record
+
+      expect(
+          csv,
+          equals(
+              'Header #1,Header #2,Header #3\r\nITEM 1,A #1,B #1\r\nITEM 1,C #1,D #1\r\n'));
+    });
+
+    test('Write structured data - Map<String, dynamic>', () {
+      final sb = StringBuffer();
+      final headers = ['Header #1', 'Header #2', 'Header #3'];
+      final writer = CsvWriter.withHeaders(sb, headers);
+
+      writer.writeData(data: {
+        'Header #1': 'ITEM 1',
+        'Header #2': 'A #1',
+        'Header #3': 'B #1'
+      }, clear: false);
+      expect(writer['Header #1'], equals('ITEM 1'));
+      expect(writer['Header #2'], equals('A #1'));
+      expect(writer['Header #3'], equals('B #1'));
+
+      writer.writeData(
+          data: {'Header #2': 'C #1', 'Header #3': 'D #1'}, clear: false);
+      expect(writer['Header #1'], equals('ITEM 1'));
+      expect(writer['Header #2'], equals('C #1'));
+      expect(writer['Header #3'], equals('D #1'));
+
+      final csv = sb.toString();
+
+      final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
+
+      expect(lines.length, equals(3)); // 1 header + 2 records
+      expect(lines[0],
+          equals('Header #1,Header #2,Header #3')); // first line = header
+      expect(
+          lines[1], equals('ITEM 1,A #1,B #1')); // second line = first record
+      expect(
+          lines[2], equals('ITEM 1,C #1,D #1')); // second line = first record
+
+      expect(
+          csv,
+          equals(
+              'Header #1,Header #2,Header #3\r\nITEM 1,A #1,B #1\r\nITEM 1,C #1,D #1\r\n'));
+    });
+
+    test('Close', () async {
+      var closed = false;
+
+      final sb = StringBuffer();
+      final headers = ['Header #1', 'Header #2', 'Header #3'];
+      final writer = CsvWriter.withHeaders(sb, headers);
+      writer.done.whenComplete(() {
+        closed = true;
+      });
+
+      writer.writeData(data: {
+        'Header #1': 'ITEM 1',
+        'Header #2': 'A #1',
+        'Header #3': 'B #1'
+      }, clear: false);
+
+      await writer.close();
+
+      expect(closed, isTrue);
+
+      final csv = sb.toString();
+
+      final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
+
+      expect(lines.length, equals(2)); // 1 header + 1 record
+      expect(lines[0],
+          equals('Header #1,Header #2,Header #3')); // first line = header
+      expect(
+          lines[1], equals('ITEM 1,A #1,B #1')); // second line = first record
+
+      expect(
+          csv, equals('Header #1,Header #2,Header #3\r\nITEM 1,A #1,B #1\r\n'));
     });
   });
 
@@ -371,18 +530,18 @@ void main() {
     test('No header', () async {
       final writer = CsvWriter(file.openWrite(mode: FileMode.write), 3);
 
-      writer.set(index: 0, value: 'First record');
-      writer.set(index: 1, value: 'A #1');
-      writer.set(index: 2, value: 'B #1');
+      writer.set('First record', index: 0);
+      writer.set('A #1', index: 1);
+      writer.set('B #1', index: 2);
       writer.writeData();
 
-      writer.set(index: 0, value: 'Second record');
-      writer.set(index: 1, value: 'A #2');
-      writer.set(index: 2, value: 'B #2');
+      writer.set('Second record', index: 0);
+      writer.set('A #2', index: 1);
+      writer.set('B #2', index: 2);
       writer.writeData();
 
       await writer.close();
-      final csv = await File('.test.data.csv').readAsString();
+      final csv = await file.readAsString();
 
       final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
 
@@ -412,7 +571,7 @@ void main() {
       writer.writeData();
 
       await writer.close();
-      final csv = await File('.test.data.csv').readAsString();
+      final csv = await file.readAsString();
 
       final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
 
@@ -435,18 +594,18 @@ void main() {
       final writer =
           CsvWriter.withHeaders(file.openWrite(mode: FileMode.write), headers);
 
-      writer.set(header: 'Header', value: 'First record');
-      writer.set(header: 'Value', index: 0, value: 'A #1');
-      writer.set(header: 'Value', index: 1, value: 'B #1');
+      writer.set('First record', header: 'Header');
+      writer.set('A #1', header: 'Value', index: 0);
+      writer.set('B #1', header: 'Value', index: 1);
       writer.writeData();
 
-      writer.set(header: 'Header', value: 'Second record');
-      writer.set(header: 'Value', index: 0, value: 'A #2');
-      writer.set(header: 'Value', index: 1, value: 'B #2');
+      writer.set('Second record', header: 'Header');
+      writer.set('A #2', header: 'Value', index: 0);
+      writer.set('B #2', header: 'Value', index: 1);
       writer.writeData();
 
       await writer.close();
-      final csv = await File('.test.data.csv').readAsString();
+      final csv = await file.readAsString();
 
       final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
 
@@ -468,18 +627,18 @@ void main() {
       final writer =
           CsvWriter.withHeaders(file.openWrite(mode: FileMode.write), headers);
 
-      writer.set(index: 0, value: 'First record');
-      writer.set(index: 1, value: 'A #1');
-      writer.set(index: 2, value: 'B #1');
+      writer.set('First record', index: 0);
+      writer.set('A #1', index: 1);
+      writer.set('B #1', index: 2);
       writer.writeData();
 
-      writer.set(index: 0, value: 'Second record');
-      writer.set(index: 1, value: 'A #2');
-      writer.set(index: 2, value: 'B #2');
+      writer.set('Second record', index: 0);
+      writer.set('A #2', index: 1);
+      writer.set('B #2', index: 2);
       writer.writeData();
 
       await writer.close();
-      final csv = await File('.test.data.csv').readAsString();
+      final csv = await file.readAsString();
 
       final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
 
@@ -504,35 +663,34 @@ void main() {
       writer['Header'] = 'TEST #1';
       expect(writer['Header'], equals('TEST #1'));
 
-      writer.set(header: 'Header', value: 'TEST #2');
+      writer.set('TEST #2', header: 'Header');
       expect(writer.get(header: 'Header'), equals('TEST #2'));
 
-      writer.set(header: 'Header', index: 0, value: 'TEST #2');
+      writer.set('TEST #2', header: 'Header', index: 0);
       expect(writer.get(header: 'Header', index: 0), equals('TEST #2'));
 
-      expect(() => writer.set(header: 'Header', index: 1, value: 'MUST THROW'),
+      expect(() => writer.set('MUST THROW', header: 'Header', index: 1),
           throwsA(isA<InvalidHeaderException>()));
 
       expect(() => writer['Value'] = 'MUST THROW',
           throwsA(isA<InvalidHeaderException>()));
-      expect(() => writer.set(header: 'Value', value: 'MUST THROW'),
+      expect(() => writer.set('MUST THROW', header: 'Value'),
           throwsA(isA<InvalidHeaderException>()));
 
-      writer.set(header: 'Value', index: 0, value: 'VALUE #1');
+      writer.set('VALUE #1', header: 'Value', index: 0);
       expect(writer.get(header: 'Value', index: 0), equals('VALUE #1'));
 
-      writer.set(header: 'Value', index: 1, value: 'VALUE #2');
+      writer.set('VALUE #2', header: 'Value', index: 1);
       expect(writer.get(header: 'Value', index: 1), equals('VALUE #2'));
 
-      expect(() => writer.set(header: 'Value', index: 2, value: 'MUST THROW'),
+      expect(() => writer.set('MUST THROW', header: 'Value', index: 2),
           throwsA(isA<InvalidHeaderException>()));
 
       expect(() => writer['Undefined'] = 'MUST THROW',
           throwsA(isA<InvalidHeaderException>()));
-      expect(() => writer.set(header: 'Undefined', value: 'MUST THROW'),
+      expect(() => writer.set('MUST THROW', header: 'Undefined'),
           throwsA(isA<InvalidHeaderException>()));
-      expect(
-          () => writer.set(header: 'Undefined', index: 1, value: 'MUST THROW'),
+      expect(() => writer.set('MUST THROW', header: 'Undefined', index: 1),
           throwsA(isA<InvalidHeaderException>()));
 
       await writer.close();
@@ -555,7 +713,7 @@ void main() {
       writer.writeData();
 
       await writer.close();
-      final csv = await File('.test.data.csv').readAsString();
+      final csv = await file.readAsString();
 
       final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
 
@@ -590,7 +748,7 @@ void main() {
       writer.writeData();
 
       await writer.close();
-      final csv = await File('.test.data.csv').readAsString();
+      final csv = await file.readAsString();
 
       final lines = csv.split('\n').where((l) => l.isNotEmpty).toList();
 
@@ -619,7 +777,7 @@ void main() {
       writer.writeData();
 
       await writer.close();
-      final csv = await File('.test.data.csv').readAsString();
+      final csv = await file.readAsString();
 
       final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
 
@@ -648,7 +806,7 @@ void main() {
       writer.writeData();
 
       await writer.close();
-      final csv = await File('.test.data.csv').readAsString();
+      final csv = await file.readAsString();
 
       final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
 
@@ -677,7 +835,7 @@ void main() {
       writer.writeData();
 
       await writer.close();
-      final csv = await File('.test.data.csv').readAsString();
+      final csv = await file.readAsString();
 
       final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
 
@@ -710,7 +868,7 @@ void main() {
       writer.writeData();
 
       await writer.close();
-      final csv = await File('.test.data.csv').readAsString();
+      final csv = await file.readAsString();
 
       final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
 
@@ -726,6 +884,40 @@ void main() {
           csv,
           equals(
               'Header #1,Header #2,Header #3\r\nITEM 1,A #1,B #1\r\nITEM 1,C #1,D #1\r\n'));
+    });
+
+    test('Close', () async {
+      var closed = false;
+
+      final headers = ['Header #1', 'Header #2', 'Header #3'];
+      final writer =
+          CsvWriter.withHeaders(file.openWrite(mode: FileMode.write), headers);
+      writer.done.whenComplete(() {
+        closed = true;
+      });
+
+      writer.writeData(data: {
+        'Header #1': 'ITEM 1',
+        'Header #2': 'A #1',
+        'Header #3': 'B #1'
+      }, clear: false);
+
+      await writer.close();
+
+      expect(closed, isTrue);
+
+      final csv = await file.readAsString();
+
+      final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
+
+      expect(lines.length, equals(2)); // 1 header + 1 record
+      expect(lines[0],
+          equals('Header #1,Header #2,Header #3')); // first line = header
+      expect(
+          lines[1], equals('ITEM 1,A #1,B #1')); // second line = first record
+
+      expect(
+          csv, equals('Header #1,Header #2,Header #3\r\nITEM 1,A #1,B #1\r\n'));
     });
   });
 }

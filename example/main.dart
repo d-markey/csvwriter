@@ -3,13 +3,11 @@ import 'dart:io';
 import 'package:csvwriter/csvwriter.dart';
 
 void main() async {
-  var nbSink = StringBuffer();
-  var nbWriter = CsvWriter.withHeaders(nbSink, ['Number', 'Odd?', 'Even?']);
+  final nbSink = StringBuffer();
+  final nbWriter = CsvWriter.withHeaders(nbSink, ['Number', 'Odd?', 'Even?']);
   for (var i = 0; i < 100; i++) {
-    nbWriter['Number'] = i;
-    nbWriter['Odd?'] = (i % 2) != 0;
-    nbWriter['Even?'] = (i % 2) == 0;
-    nbWriter.writeData();
+    nbWriter.writeData(
+        data: {'Number': i, 'Odd?': (i % 2) != 0, 'Even?': (i % 2) == 0});
   }
 
   print('NUMBERS:');
@@ -17,8 +15,13 @@ void main() async {
 
   print('');
 
-  var familyFile = File('test.csv');
-  var familyWriter = CsvWriter.withHeaders(familyFile.openWrite(), [
+  final familyFile = File('family.csv');
+  final familySink = familyFile.openWrite(mode: FileMode.write);
+  var sinkIsClosed = false;
+  familySink.done.whenComplete(() {
+    sinkIsClosed = true;
+  });
+  final familyWriter = CsvWriter.withHeaders(familySink, [
     'Name',
     'First name',
     'Father name',
@@ -28,14 +31,14 @@ void main() async {
   ]);
 
   try {
-    familyWriter.set(header: 'Name', value: 'Doe');
-    familyWriter.set(header: 'Father name', value: 'Doe');
-    familyWriter.set(header: 'First name', index: 1, value: 'John');
-    familyWriter.set(header: 'Mother name', value: 'Smith');
-    familyWriter.set(header: 'First name', index: 2, value: 'Ann');
+    familyWriter.set('Doe', header: 'Name');
+    familyWriter.set('Doe', header: 'Father name');
+    familyWriter.set('John', header: 'First name', index: 1);
+    familyWriter.set('Smith', header: 'Mother name');
+    familyWriter.set('Ann', header: 'First name', index: 2);
 
     for (var i = 0; i < 5; i++) {
-      familyWriter.set(header: 'First name', index: 0, value: 'John #$i, Jr');
+      familyWriter.set('John #$i, Jr', header: 'First name', index: 0);
       familyWriter.writeData(clear: false);
       if (i % 2 == 0) {
         await familyWriter.flush();
@@ -45,6 +48,6 @@ void main() async {
     await familyWriter.close();
   }
 
-  print('FAMILY:');
+  print('FAMILY (sink ${sinkIsClosed ? 'has been' : 'has not been'} closed):');
   print(familyFile.readAsStringSync());
 }
