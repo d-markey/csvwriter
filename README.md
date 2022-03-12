@@ -1,6 +1,6 @@
 # csvwriter
 
-Lightweight Dart package to write CSV data to a `StringSink`. Supports and extends RFC 4180.
+Lightweight, cross-platform Dart package to write CSV data to a `StringSink`. Supports and extends RFC 4180.
 
 # Usage
 

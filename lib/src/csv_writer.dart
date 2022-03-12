@@ -1,6 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+
+import 'sink_wrapper.dart';
+
+import 'sink_wrapper_stub.dart'
+    if (dart.library.js) 'sink_wrapper_impl_browser.dart'
+    if (dart.library.html) 'sink_wrapper_impl_browser.dart'
+    if (dart.library.io) 'sink_wrapper_impl_vm.dart';
 
 import 'csv_data.dart';
 import 'exceptions.dart';
@@ -26,22 +32,19 @@ class CsvWriter {
   /// can only be set/read by index.
   CsvWriter(StringSink sink, int columns,
       {this.separator = _defSeparator, this.endOfLine = _defEndOfLine})
-      : _sink = sink,
+      : _wrapper = wrapSink(sink),
         _data = CsvData(columns),
-        hasHeader = false {
-    _handleOnClose();
-  }
+        hasHeader = false;
 
   /// Builds a new [CsvWriter] bound to [sink]. The supplied [headers] will be added as the first line, and CS
   ///  records will consist of `headers.length` values. [separator] (default is `','`) and [endOfLine] (default
   /// is `'\r\n'`) can be overriden. Using this constructor, data may be set/read by header name and/or index.
   CsvWriter.withHeaders(StringSink sink, Iterable<String> headers,
       {this.separator = _defSeparator, this.endOfLine = _defEndOfLine})
-      : _sink = sink,
+      : _wrapper = wrapSink(sink),
         _data = CsvData.withHeaders(headers),
         hasHeader = true {
-    _handleOnClose();
-    _sink.write(_data.headers.join(separator) + endOfLine);
+    _wrapper.write(_data.headers.join(separator) + endOfLine);
   }
 
   static const String _defSeparator = ',';
@@ -54,7 +57,7 @@ class CsvWriter {
   /// End-of-line character; default is `'\r\n'`.
   final String endOfLine;
 
-  final StringSink _sink;
+  final SinkWrapper _wrapper;
   final CsvData _data;
 
   /// `true` if this instance was constructed with [CsvWriter.withHeaders].
@@ -134,14 +137,11 @@ class CsvWriter {
   /// After the record has been written to the underlying [StringSink], the count of records is incremented and the
   /// internal data record is reset unless [clear] is `false`.
   void writeData({dynamic data, bool clear = true}) {
-    if (_done.isCompleted) {
-      throw UnsupportedError('Cannot write to a closed sink.');
-    }
     if (data != null) {
       setData(data);
     }
     if (!_data.isEmpty) {
-      _sink.write(_data.toCsv(separator) + endOfLine);
+      _wrapper.write(_data.toCsv(separator) + endOfLine);
       _rowCount++;
       if (clear) {
         clearData();
@@ -149,59 +149,15 @@ class CsvWriter {
     }
   }
 
-  static final Future _completed = Future.value();
-
   /// Flushes the underlying [StringSink] if it is an [IOSink], otherwise returns a completed [Future].
-  Future flush() {
-    if (_sink is IOSink) {
-      return (_sink as IOSink).flush();
-    } else {
-      return _completed;
-    }
-  }
+  Future flush() => _wrapper.flush();
 
   /// Returns a [Future] that completes when this instance is closed. The returned [Future] is the same
   /// as the one returned by [close].
-  Future get done => _done.future;
-  final _done = Completer();
-
-  bool _closing = false;
-
-  void _onClose() {
-    if (!_closing) {
-      _done.complete();
-    }
-  }
-
-  void _handleOnClose() {
-    if (_sink is IOSink) {
-      (_sink as IOSink).done.whenComplete(_onClose);
-    }
-  }
+  Future get done => _wrapper.done;
 
   /// If the underlying [StringSink] is an [IOSink], flushes and closes it. If it is a [ClosableStringSink],
   /// simply close it. This method returns the same future as [done]. Multiple calls to [close] are allowed
   /// but only the first one will have an effect.
-  Future close() {
-    if (!_done.isCompleted) {
-      if (_sink is IOSink) {
-        final ioSink = _sink as IOSink;
-        _done.complete(ioSink.flush().whenComplete(() async {
-          _closing = true;
-          try {
-            await ioSink.close();
-          } finally {
-            _closing = false;
-          }
-        }));
-      } else if (_sink is ClosableStringSink) {
-        final closableSink = _sink as ClosableStringSink;
-        closableSink.close();
-        _done.complete();
-      } else {
-        _done.complete();
-      }
-    }
-    return _done.future;
-  }
+  Future close() => _wrapper.close();
 }

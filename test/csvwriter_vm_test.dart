@@ -1,10 +1,12 @@
+@TestOn('vm')
+
 import 'dart:io';
 
 import 'package:csvwriter/csvwriter.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('StringBuffer', () {
+  group('VM - StringBuffer', () {
     test('No header', () {
       final sb = StringBuffer();
       final writer = CsvWriter(sb, 3);
@@ -512,7 +514,7 @@ void main() {
     });
   });
 
-  group('IOSink', () {
+  group('VM - IOSink', () {
     final file = File('.test.data.csv');
 
     setUp(() {
