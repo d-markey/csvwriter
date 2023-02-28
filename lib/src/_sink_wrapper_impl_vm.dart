@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'sink_wrapper.dart';
+import '_sink_wrapper.dart';
 
-SinkWrapper wrapSink(StringSink sink) => IOSinkWrapper(sink);
+SinkWrapper wrapSink(StringSink sink) => _IOSinkWrapper(sink);
 
-class IOSinkWrapper implements SinkWrapper {
-  IOSinkWrapper(this._sink) {
+class _IOSinkWrapper implements SinkWrapper {
+  _IOSinkWrapper(this._sink) {
     if (_sink is IOSink) {
       (_sink as IOSink).done.whenComplete(_onClose);
     }
@@ -65,7 +65,7 @@ class IOSinkWrapper implements SinkWrapper {
   @override
   void write(String data) {
     if (_done.isCompleted) {
-      throw UnsupportedError('Cannot write to a closed sink');
+      throw UnsupportedError('Cannot write to a closed sink.');
     }
     _sink.write(data);
   }

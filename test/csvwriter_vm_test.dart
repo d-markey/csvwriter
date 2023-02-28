@@ -370,6 +370,36 @@ void main() {
               'Header #1,Header #2,Header #3\r\n"It contains a "" and must be escaped",A #1,B #1\r\n'));
     });
 
+    test('Escaped Values - custom end of line', () {
+      final sb = StringBuffer();
+      final headers = ['Header #1', 'Header #2', 'Header #3'];
+      final writer = CsvWriter.withHeaders(sb, headers, endOfLine: '<BR>');
+
+      writer['Header #1'] = 'It contains a <BR> and must be escaped';
+      writer['Header #2'] = 'A #1';
+      writer['Header #3'] = 'B #1';
+      writer.writeData();
+
+      final csv = sb.toString();
+
+      final lines = csv.split('<BR>').where((l) => l.isNotEmpty).toList();
+
+      expect(lines.length, equals(3)); // 1 header + 1 record (split in 2)
+      expect(lines[0],
+          equals('Header #1,Header #2,Header #3')); // first line = header
+      expect(lines[1],
+          equals('"It contains a ')); // second line = first record (first part)
+      expect(
+          lines[2],
+          equals(
+              ' and must be escaped",A #1,B #1')); // third line = first record (second part)
+
+      expect(
+          csv,
+          equals(
+              'Header #1,Header #2,Header #3<BR>"It contains a <BR> and must be escaped",A #1,B #1<BR>'));
+    });
+
     test('Retain values', () {
       final sb = StringBuffer();
       final headers = ['Header #1', 'Header #2', 'Header #3'];
@@ -855,6 +885,38 @@ void main() {
               'Header #1,Header #2,Header #3\r\n"It contains a "" and must be escaped",A #1,B #1\r\n'));
     });
 
+    test('Escaped Values - custom end of line', () async {
+      final headers = ['Header #1', 'Header #2', 'Header #3'];
+      final writer = CsvWriter.withHeaders(
+          file.openWrite(mode: FileMode.write), headers,
+          endOfLine: '<BR>');
+
+      writer['Header #1'] = 'It contains a <BR> and must be escaped';
+      writer['Header #2'] = 'A #1';
+      writer['Header #3'] = 'B #1';
+      writer.writeData();
+
+      await writer.close();
+      final csv = await file.readAsString();
+
+      final lines = csv.split('<BR>').where((l) => l.isNotEmpty).toList();
+
+      expect(lines.length, equals(3)); // 1 header + 1 record (split in 2)
+      expect(lines[0],
+          equals('Header #1,Header #2,Header #3')); // first line = header
+      expect(lines[1],
+          equals('"It contains a ')); // second line = first record (first part)
+      expect(
+          lines[2],
+          equals(
+              ' and must be escaped",A #1,B #1')); // second line = first record (second part)
+
+      expect(
+          csv,
+          equals(
+              'Header #1,Header #2,Header #3<BR>"It contains a <BR> and must be escaped",A #1,B #1<BR>'));
+    });
+
     test('Retain values', () async {
       final headers = ['Header #1', 'Header #2', 'Header #3'];
       final writer =
@@ -888,14 +950,18 @@ void main() {
               'Header #1,Header #2,Header #3\r\nITEM 1,A #1,B #1\r\nITEM 1,C #1,D #1\r\n'));
     });
 
-    test('Close', () async {
-      var closed = false;
+    test('Close (writer)', () async {
+      var closedWriter = false;
+      var closedSink = false;
 
       final headers = ['Header #1', 'Header #2', 'Header #3'];
-      final writer =
-          CsvWriter.withHeaders(file.openWrite(mode: FileMode.write), headers);
+      final sink = file.openWrite(mode: FileMode.write);
+      sink.done.whenComplete(() {
+        closedSink = true;
+      });
+      final writer = CsvWriter.withHeaders(sink, headers);
       writer.done.whenComplete(() {
-        closed = true;
+        closedWriter = true;
       });
 
       writer.writeData(data: {
@@ -906,7 +972,71 @@ void main() {
 
       await writer.close();
 
-      expect(closed, isTrue);
+      expect(closedWriter, isTrue);
+      expect(closedSink, isTrue);
+
+      expect(
+          () => writer.writeData(data: {
+                'Header #1': 'ITEM 1',
+                'Header #2': 'A #1',
+                'Header #3': 'B #1'
+              }, clear: false),
+          throwsA(isA<UnsupportedError>().having(
+              (ex) => ex.toString().toLowerCase(),
+              'message',
+              contains('cannot write to a closed sink'))));
+
+      final csv = await file.readAsString();
+
+      final lines = csv.split('\r\n').where((l) => l.isNotEmpty).toList();
+
+      expect(lines.length, equals(2)); // 1 header + 1 record
+      expect(lines[0],
+          equals('Header #1,Header #2,Header #3')); // first line = header
+      expect(
+          lines[1], equals('ITEM 1,A #1,B #1')); // second line = first record
+
+      expect(
+          csv, equals('Header #1,Header #2,Header #3\r\nITEM 1,A #1,B #1\r\n'));
+    });
+
+    test('Close (sink)', () async {
+      var closedWriter = false;
+      var closedSink = false;
+
+      final headers = ['Header #1', 'Header #2', 'Header #3'];
+      final sink = file.openWrite(mode: FileMode.write);
+      sink.done.whenComplete(() {
+        closedSink = true;
+      });
+      final writer = CsvWriter.withHeaders(sink, headers);
+      writer.done.whenComplete(() {
+        closedWriter = true;
+      });
+
+      writer.writeData(data: {
+        'Header #1': 'ITEM 1',
+        'Header #2': 'A #1',
+        'Header #3': 'B #1'
+      }, clear: false);
+
+      await sink.flush();
+      await sink.close();
+      await Future.delayed(Duration.zero);
+
+      expect(closedWriter, isTrue);
+      expect(closedSink, isTrue);
+
+      expect(
+          () => writer.writeData(data: {
+                'Header #1': 'ITEM 1',
+                'Header #2': 'A #1',
+                'Header #3': 'B #1'
+              }, clear: false),
+          throwsA(isA<UnsupportedError>().having(
+              (ex) => ex.toString().toLowerCase(),
+              'message',
+              contains('cannot write to a closed sink'))));
 
       final csv = await file.readAsString();
 

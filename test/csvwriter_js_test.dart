@@ -141,8 +141,8 @@ void main() {
       writer.set('TEST #2', header: 'Header');
       expect(writer.get(header: 'Header'), equals('TEST #2'));
 
-      writer.set('TEST #2', header: 'Header', index: 0);
-      expect(writer.get(header: 'Header', index: 0), equals('TEST #2'));
+      writer.set('TEST #3', header: 'Header', index: 0);
+      expect(writer.get(header: 'Header', index: 0), equals('TEST #3'));
 
       expect(() => writer.set('MUST THROW', header: 'Header', index: 1),
           throwsA(isA<InvalidHeaderException>()));
@@ -368,6 +368,37 @@ void main() {
               'Header #1,Header #2,Header #3\r\n"It contains a "" and must be escaped",A #1,B #1\r\n'));
     });
 
+    test('Escaped Values - custom end of line', () async {
+      final sb = StringBuffer();
+      final headers = ['Header #1', 'Header #2', 'Header #3'];
+      final writer = CsvWriter.withHeaders(sb, headers, endOfLine: '<BR>');
+
+      writer['Header #1'] = 'It contains a <BR> and must be escaped';
+      writer['Header #2'] = 'A #1';
+      writer['Header #3'] = 'B #1';
+      writer.writeData();
+
+      await writer.close();
+      final csv = sb.toString();
+
+      final lines = csv.split('<BR>').where((l) => l.isNotEmpty).toList();
+
+      expect(lines.length, equals(3)); // 1 header + 1 record (split in 2)
+      expect(lines[0],
+          equals('Header #1,Header #2,Header #3')); // first line = header
+      expect(lines[1],
+          equals('"It contains a ')); // second line = first record (first part)
+      expect(
+          lines[2],
+          equals(
+              ' and must be escaped",A #1,B #1')); // second line = first record (second part)
+
+      expect(
+          csv,
+          equals(
+              'Header #1,Header #2,Header #3<BR>"It contains a <BR> and must be escaped",A #1,B #1<BR>'));
+    });
+
     test('Retain values', () {
       final sb = StringBuffer();
       final headers = ['Header #1', 'Header #2', 'Header #3'];
@@ -496,6 +527,17 @@ void main() {
       await writer.close();
 
       expect(closed, isTrue);
+
+      expect(
+          () => writer.writeData(data: {
+                'Header #1': 'ITEM 1',
+                'Header #2': 'A #1',
+                'Header #3': 'B #1'
+              }, clear: false),
+          throwsA(isA<UnsupportedError>().having(
+              (ex) => ex.toString().toLowerCase(),
+              'message',
+              contains('cannot write to a closed sink'))));
 
       final csv = sb.toString();
 

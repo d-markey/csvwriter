@@ -15,7 +15,10 @@ void main() async {
 
   print('');
 
-  final familyFile = File('family.csv');
+  var path = Platform.script.toFilePath();
+  final idx = path.lastIndexOf('\\');
+  path = '${path.substring(0, idx)}\\family.csv';
+  final familyFile = File(path);
   final familySink = familyFile.openWrite(mode: FileMode.write);
   var sinkIsClosed = false;
   familySink.done.whenComplete(() {

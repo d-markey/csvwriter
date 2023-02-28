@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'sink_wrapper.dart';
+import '_sink_wrapper.dart';
 
-SinkWrapper wrapSink(StringSink sink) => BrowserSinkWrapper(sink);
+SinkWrapper wrapSink(StringSink sink) => _BrowserSinkWrapper(sink);
 
-class BrowserSinkWrapper implements SinkWrapper {
-  BrowserSinkWrapper(this._sink);
+class _BrowserSinkWrapper implements SinkWrapper {
+  _BrowserSinkWrapper(this._sink);
 
   final StringSink _sink;
   final _done = Completer();
@@ -37,7 +37,7 @@ class BrowserSinkWrapper implements SinkWrapper {
   @override
   void write(String data) {
     if (_done.isCompleted) {
-      throw UnsupportedError('Cannot write to a closed sink');
+      throw UnsupportedError('Cannot write to a closed sink.');
     }
     _sink.write(data);
   }

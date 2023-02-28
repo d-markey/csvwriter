@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'sink_wrapper.dart';
+import '_sink_wrapper.dart';
 
-import 'sink_wrapper_stub.dart'
-    if (dart.library.js) 'sink_wrapper_impl_browser.dart'
-    if (dart.library.html) 'sink_wrapper_impl_browser.dart'
-    if (dart.library.io) 'sink_wrapper_impl_vm.dart';
+import '_sink_wrapper_stub.dart'
+    if (dart.library.js) '_sink_wrapper_impl_browser.dart'
+    if (dart.library.html) '_sink_wrapper_impl_browser.dart'
+    if (dart.library.io) '_sink_wrapper_impl_vm.dart';
 
-import 'csv_data.dart';
+import '_csv_data.dart';
 import 'exceptions.dart';
 
 /// [CsvWriter] wraps around a [StringSink] and enables writing data in CSV format. The [CsvWriter] maintains
@@ -33,7 +33,7 @@ class CsvWriter {
   CsvWriter(StringSink sink, int columns,
       {this.separator = _defSeparator, this.endOfLine = _defEndOfLine})
       : _wrapper = wrapSink(sink),
-        _data = CsvData(columns),
+        _data = CsvData(columns, separator, endOfLine),
         hasHeader = false;
 
   /// Builds a new [CsvWriter] bound to [sink]. The supplied [headers] will be added as the first line, and CS
@@ -42,7 +42,7 @@ class CsvWriter {
   CsvWriter.withHeaders(StringSink sink, Iterable<String> headers,
       {this.separator = _defSeparator, this.endOfLine = _defEndOfLine})
       : _wrapper = wrapSink(sink),
-        _data = CsvData.withHeaders(headers),
+        _data = CsvData.withHeaders(headers, separator, endOfLine),
         hasHeader = true {
     _wrapper.write(_data.headers.join(separator) + endOfLine);
   }
@@ -141,7 +141,7 @@ class CsvWriter {
       setData(data);
     }
     if (!_data.isEmpty) {
-      _wrapper.write(_data.toCsv(separator) + endOfLine);
+      _wrapper.write('${_data.toCsv()}$endOfLine');
       _rowCount++;
       if (clear) {
         clearData();
