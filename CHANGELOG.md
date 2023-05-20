@@ -1,3 +1,7 @@
+## 1.3.0
+
+- Enable support of Dart 3.
+
 ## 1.2.0
 
 - Properly escape custom end of line.
